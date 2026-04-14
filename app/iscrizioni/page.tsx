@@ -15,7 +15,7 @@ export default function Iscrizioni() {
     
     const { error } = await supabase
       .from('atleti')
-      .insert([{ nome: nome, fettorale: parseInt(pettorale) }]) // Assicurati che su Supabase la colonna sia 'pettorale' o 'fettorale' (controlla lo spelling!)
+      .insert([{ nome: nome, pettorale: parseInt(pettorale) }])  
 
     if (error) {
       setMessaggio("Errore: " + error.message)
