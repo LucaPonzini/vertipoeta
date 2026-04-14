@@ -3,66 +3,91 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
+// 1. Definiamo l'interfaccia precisa per l'atleta che arriva dal DB
+interface AtletaDB {
+  id: number;
+  nome: string;
+  pettorale: number;
+  partenza: string;
+  arrivo: string;
+}
+
+// 2. Definiamo l'interfaccia per l'atleta con i calcoli del tempo
+interface AtletaClassifica extends AtletaDB {
+  tempoMs: number;
+  tempoLabel: string;
+}
+
 export default function Classifica() {
-  const [classifica, setClassifica] = useState<any[]>([])
+  const [classifica, setClassifica] = useState<AtletaClassifica[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchClassifica = async () => {
-      const { data } = await supabase
+    const scaricaDati = async () => {
+      // Specifichiamo il tipo qui <AtletaDB[]>
+      const { data, error } = await supabase
         .from('atleti')
         .select('*')
-        .not('arrivo', 'is', null) // Prendiamo solo chi è arrivato
+        .not('arrivo', 'is', null)
 
-      if (data) {
-        // Calcoliamo il tempo per ogni atleta
-        const elaborati = data.map(atleta => {
+      if (error) {
+        console.error('Errore:', error.message)
+      } else if (data) {
+        // Tipizziamo esplicitamente l'atleta nel map
+        const elaborati: AtletaClassifica[] = (data as AtletaDB[]).map((atleta) => {
           const inizio = new Date(atleta.partenza).getTime()
           const fine = new Date(atleta.arrivo).getTime()
-          const diff = fine - inizio // Differenza in millisecondi
+          const diff = fine - inizio
           
-          // Formattazione MM:SS
           const minuti = Math.floor(diff / 60000)
           const secondi = ((diff % 60000) / 1000).toFixed(0)
           const tempoFormattato = `${minuti}:${parseInt(secondi) < 10 ? '0' : ''}${secondi}`
           
-          return { ...atleta, tempoMs: diff, tempoLabel: tempoFormattato }
+          return { 
+            ...atleta, 
+            tempoMs: diff, 
+            tempoLabel: tempoFormattato 
+          }
         })
 
-        // Ordiniamo dal più veloce al più lento
         elaborati.sort((a, b) => a.tempoMs - b.tempoMs)
         setClassifica(elaborati)
       }
+      setLoading(false)
     }
 
-    fetchClassifica()
-    // Bonus: aggiorna la classifica ogni 10 secondi in automatico
-    const interval = setInterval(fetchClassifica, 10000)
+    scaricaDati()
+    const interval = setInterval(scaricaDati, 10000)
     return () => clearInterval(interval)
   }, [])
 
-  return (
-    <main className="min-h-screen bg-slate-900 text-white p-8">
-      <h1 className="text-4xl font-black mb-10 text-center uppercase italic text-lime-400">
-        🏆 Classifica Live <span className="text-white">VertiPoeta</span>
-      </h1>
+  if (loading) return <div className="min-h-screen bg-slate-900 text-white p-10 uppercase italic font-black">Caricamento...</div>
 
-      <div className="max-w-2xl mx-auto space-y-4">
-        {classifica.map((atleta, index) => (
-          <div key={atleta.pettorale} className="flex items-center bg-slate-800 p-6 rounded-2xl border-l-4 border-lime-400 shadow-xl">
-            <span className="text-2xl font-black mr-6 text-slate-500 w-8">{index + 1}°</span>
-            <div className="flex-grow">
-              <p className="text-xs uppercase tracking-widest text-slate-400 font-bold">Pettorale #{atleta.pettorale}</p>
-              <h2 className="text-xl font-bold uppercase">{atleta.nome}</h2>
-            </div>
-            <div className="text-right">
-              <p className="text-3xl font-black text-lime-400 font-mono">{atleta.tempoLabel}</p>
-            </div>
-          </div>
-        ))}
+  return (
+    <main className="min-h-screen bg-slate-900 text-white p-6 md:p-12 font-sans">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-5xl font-black uppercase italic text-lime-400 mb-10 text-center">Classifica Live</h1>
         
-        {classifica.length === 0 && (
-          <p className="text-center text-slate-500 italic">Ancora nessun arrivato. La sfida è in corso!</p>
-        )}
+        <div className="space-y-4">
+          {classifica.map((atleta, index) => (
+            <div key={atleta.id} className="flex items-center bg-slate-800 p-5 rounded-2xl border border-slate-700">
+              <div className="w-10 h-10 flex items-center justify-center bg-lime-400 text-black font-black rounded-lg mr-4 italic">
+                {index + 1}
+              </div>
+              <div className="grow">
+                <p className="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Pettorale #{atleta.pettorale}</p>
+                <h2 className="text-lg font-black uppercase tracking-tight">{atleta.nome}</h2>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-black text-white font-mono leading-none">{atleta.tempoLabel}</p>
+              </div>
+            </div>
+          ))}
+          
+          {classifica.length === 0 && (
+            <p className="text-center text-slate-500 italic py-20">Nessun arrivato al momento.</p>
+          )}
+        </div>
       </div>
     </main>
   )

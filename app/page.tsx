@@ -11,7 +11,7 @@ export default function Home() {
             Verti<span className="text-white font-light">Poeta</span>
           </h1>
           <p className="mt-4 text-xl md:text-2xl font-medium text-slate-300 max-w-2xl mx-auto italic">
-            "Tra un respiro affannato e un verso rubato, la vetta ti attende."
+            {`"Tra un respiro affannato e un verso rubato, la vetta ti attende."`}
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             <Link href="/iscrizioni" className="bg-white text-black px-8 py-4 rounded-full font-bold uppercase hover:bg-lime-400 transition-all">
@@ -24,18 +24,17 @@ export default function Home() {
         </div>
       </section>
 
-      {/* SEZIONE PAGINE (NAVIGAZIONE RAPIDA) */}
+      {/* SEZIONE PAGINE */}
       <section className="py-20 px-6 max-w-7xl mx-auto">
         <h2 className="text-3xl font-black uppercase mb-12 border-l-4 border-lime-400 pl-4">Menu Gara</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <NavCard title="Iscrizioni" desc="Riserva il tuo pettorale per la prossima scalata." link="/iscrizioni" emoji="✍️" />
-          <NavCard title="Percorso" desc="1.5km con 300m D+. Analizza ogni singolo metro." link="#" emoji="⛰️" />
+          <NavCard title="Percorso" desc="Analizza ogni singolo metro del tracciato." link="/percorso" emoji="⛰️" />
           <NavCard title="Cronometro" desc="Area riservata per la gestione dei tempi." link="/cronometro" emoji="⏱️" />
           <NavCard title="Classifica" desc="Guarda i tempi in tempo reale dal traguardo." link="/classifica" emoji="🏆" />
         </div>
       </section>
 
-      {/* FOOTER */}
       <footer className="py-10 text-center border-t border-slate-800 text-slate-500 text-sm">
         © 2026 VertiPoeta - Organizzato da Luca Ponzini
       </footer>
