@@ -1,113 +1,124 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import Link from 'next/link'
 
-export default function Iscrizioni() {
-  const [nome, setNome] = useState('')
-  const [pettorale, setPettorale] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [messaggio, setMessaggio] = useState('')
-  const [isSuccess, setIsSuccess] = useState(false)
+export default function Cronometro() {
+  const [atleti, setAtleti] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  
+  // STATO PER LA SICUREZZA
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [password, setPassword] = useState('')
+  const PASSWORD_SEGRETA = "poeta2026" // Scegli la tua password qui
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    
-    // CORRETTO: la colonna ora è 'pettorale'
-    const { error } = await supabase
+  const fetchAtleti = async () => {
+    const { data } = await supabase
       .from('atleti')
-      .insert([{ nome: nome, pettorale: parseInt(pettorale) }])
-
-    if (error) {
-      setMessaggio("Errore: " + error.message)
-      setIsSuccess(false)
-    } else {
-      setMessaggio("Iscrizione avvenuta! Ci vediamo in vetta 🚀")
-      setIsSuccess(true)
-      setNome('')
-      setPettorale('')
-    }
+      .select('*')
+      .order('pettorale', { ascending: true })
+    if (data) setAtleti(data)
     setLoading(false)
   }
 
+  useEffect(() => {
+    fetchAtleti()
+    const interval = setInterval(fetchAtleti, 5000) // Aggiorna ogni 5 secondi per il pubblico
+    return () => clearInterval(interval)
+  }, [])
+
+  const registraPartenza = async (fettorale: number) => {
+    if (!isAdmin) return // Protezione extra
+    const ora = new Date().toISOString()
+    await supabase.from('atleti').update({ partenza: ora }).eq('pettorale', fettorale)
+    fetchAtleti()
+  }
+
+  const registraArrivo = async (fettorale: number) => {
+    if (!isAdmin) return // Protezione extra
+    const ora = new Date().toISOString()
+    await supabase.from('atleti').update({ arrivo: ora }).eq('pettorale', fettorale)
+    fetchAtleti()
+  }
+
   return (
-    <main className="min-h-screen bg-slate-900 text-white p-6 flex flex-col items-center justify-center relative">
-      
-      {/* TASTO X - Torna alla Home */}
-      <Link 
-        href="/" 
-        className="absolute top-8 right-8 text-slate-400 hover:text-white transition-all p-2 bg-slate-800 hover:bg-slate-700 rounded-full shadow-xl z-50"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </Link>
-
-      <div className="w-full max-w-md bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl relative overflow-hidden">
-        
-        {!isSuccess ? (
-          <>
-            <h1 className="text-3xl font-black mb-2 uppercase italic text-lime-400">Unisciti alla sfida</h1>
-            <p className="text-slate-400 mb-8 text-sm">Inserisci i tuoi dati per riservare il pettorale di VertiPoeta.</p>
-            
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 font-mono">Nome Completo</label>
-                <input 
-                  type="text" 
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  className="w-full p-4 rounded-xl bg-slate-900 border border-slate-700 focus:border-lime-400 outline-none transition-all placeholder:text-slate-700"
-                  placeholder="Es: Luca Ponzini"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 font-mono">Numero Pettorale</label>
-                <input 
-                  type="number" 
-                  value={pettorale}
-                  onChange={(e) => setPettorale(e.target.value)}
-                  className="w-full p-4 rounded-xl bg-slate-900 border border-slate-700 focus:border-lime-400 outline-none transition-all placeholder:text-slate-700"
-                  placeholder="Es: 42"
-                  required
-                />
-              </div>
-
-              <button 
-                type="submit" 
-                disabled={loading}
-                className="w-full bg-lime-400 text-black font-black py-4 rounded-xl hover:bg-lime-300 transition-all uppercase tracking-tighter disabled:opacity-50 active:scale-95 shadow-lg shadow-lime-400/10"
-              >
-                {loading ? 'Registrazione...' : 'Conferma Iscrizione'}
-              </button>
-            </form>
-          </>
-        ) : (
-          /* SCHERMATA DI SUCCESSO */
-          <div className="text-center py-10">
-            <div className="text-6xl mb-6">🏆</div>
-            <h2 className="text-2xl font-black uppercase mb-4 text-lime-400 italic">Pettorale Confermato!</h2>
-            <p className="text-slate-300 mb-8 leading-relaxed px-4">
-              I tuoi dati sono stati salvati nel database.<br/>Inizia a scaldare i polpacci.
-            </p>
-            <Link 
-              href="/" 
-              className="inline-block bg-white text-black font-black px-10 py-4 rounded-xl hover:bg-lime-400 transition-all uppercase text-xs tracking-widest shadow-xl"
-            >
-              Torna alla Home
-            </Link>
+    <main className="min-h-screen bg-slate-900 text-white p-4 md:p-10 font-sans">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <h1 className="text-3xl font-black uppercase italic text-lime-400">Controllo Gara</h1>
+          
+          {/* BOX PASSWORD SEGRETO */}
+          <div className="bg-slate-800 p-2 rounded-xl border border-slate-700 flex items-center gap-2">
+            <input 
+              type="password" 
+              placeholder="Codice Admin"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value)
+                if(e.target.value === PASSWORD_SEGRETA) setIsAdmin(true)
+                else setIsAdmin(false)
+              }}
+              className="bg-slate-900 border-none text-xs p-2 rounded outline-none w-32 focus:ring-1 focus:ring-lime-400"
+            />
+            {isAdmin ? (
+              <span className="text-[10px] font-bold text-lime-400 animate-pulse">● LIVE EDIT</span>
+            ) : (
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">● Solo Lettura</span>
+            )}
           </div>
-        )}
+        </div>
 
-        {messaggio && !isSuccess && (
-          <div className="mt-4 p-4 rounded-lg text-center font-bold bg-red-500/10 text-red-500 border border-red-500/20 text-xs">
-            {messaggio}
-          </div>
-        )}
+        <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-800/50 shadow-2xl">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-800 text-slate-400 text-[10px] uppercase tracking-[0.2em]">
+                <th className="p-4">Pett.</th>
+                <th className="p-4">Atleta</th>
+                <th className="p-4">Comandi</th>
+                <th className="p-4 text-right">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800">
+              {atleti.map((atleta) => (
+                <tr key={atleta.pettorale} className="hover:bg-slate-700/30 transition-colors">
+                  <td className="p-4 font-black text-lime-400 text-lg">#{atleta.pettorale}</td>
+                  <td className="p-4 font-bold uppercase text-sm">{atleta.nome}</td>
+                  <td className="p-4">
+                    <div className="flex gap-2">
+                      {!atleta.partenza && (
+                        <button 
+                          disabled={!isAdmin}
+                          onClick={() => registraPartenza(atleta.pettorale)}
+                          className={`px-4 py-2 rounded-lg font-black text-[10px] uppercase transition-all ${isAdmin ? 'bg-blue-600 hover:bg-blue-500' : 'bg-slate-700 opacity-30 cursor-not-allowed'}`}
+                        >
+                          Start
+                        </button>
+                      )}
+                      {atleta.partenza && !atleta.arrivo && (
+                        <button 
+                          disabled={!isAdmin}
+                          onClick={() => registraArrivo(atleta.pettorale)}
+                          className={`px-4 py-2 rounded-lg font-black text-[10px] uppercase transition-all ${isAdmin ? 'bg-red-600 hover:bg-red-500 animate-pulse' : 'bg-slate-700 opacity-30 cursor-not-allowed'}`}
+                        >
+                          Arrivo
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                  <td className="p-4 text-right">
+                    {atleta.arrivo ? (
+                      <span className="text-[10px] font-bold bg-lime-400/10 text-lime-400 border border-lime-400/20 px-2 py-1 rounded">FINITO</span>
+                    ) : atleta.partenza ? (
+                      <span className="text-[10px] font-bold bg-orange-500/10 text-orange-500 border border-orange-500/20 px-2 py-1 rounded animate-pulse">IN SALITA</span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-slate-600 uppercase">In Attesa</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </main>
   )
