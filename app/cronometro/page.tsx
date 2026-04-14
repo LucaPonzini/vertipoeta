@@ -1,116 +1,113 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import Link from 'next/link'
 
-export default function Cronometro() {
-  const [atleti, setAtleti] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+export default function Iscrizioni() {
+  const [nome, setNome] = useState('')
+  const [pettorale, setPettorale] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [messaggio, setMessaggio] = useState('')
+  const [isSuccess, setIsSuccess] = useState(false)
 
-  // Carica gli atleti dal database
-  const fetchAtleti = async () => {
-    const { data, error } = await supabase
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    
+    // CORRETTO: la colonna ora è 'pettorale'
+    const { error } = await supabase
       .from('atleti')
-      .select('*')
-      .order('pettorale', { ascending: true })
-    if (data) setAtleti(data)
+      .insert([{ nome: nome, pettorale: parseInt(pettorale) }])
+
+    if (error) {
+      setMessaggio("Errore: " + error.message)
+      setIsSuccess(false)
+    } else {
+      setMessaggio("Iscrizione avvenuta! Ci vediamo in vetta 🚀")
+      setIsSuccess(true)
+      setNome('')
+      setPettorale('')
+    }
     setLoading(false)
   }
 
-  useEffect(() => {
-    fetchAtleti()
-  }, [])
-
-  // Funzione per registrare la PARTENZA usando il pettorale
-  const registraPartenza = async (numeroPettorale: number) => {
-    console.log("Tentativo partenza per pettorale:", numeroPettorale)
-    const ora = new Date().toISOString()
-    
-    const { error } = await supabase
-      .from('atleti')
-      .update({ partenza: ora })
-      .eq('pettorale', numeroPettorale)
-
-    if (error) {
-      console.error("Errore partenza:", error.message)
-      alert("Errore: " + error.message)
-    } else {
-      fetchAtleti()
-    }
-  }
-
-  // Funzione per registrare l'ARRIVO usando il pettorale
-  const registraArrivo = async (numeroPettorale: number) => {
-    console.log("Tentativo arrivo per pettorale:", numeroPettorale)
-    const ora = new Date().toISOString()
-    
-    const { error } = await supabase
-      .from('atleti')
-      .update({ arrivo: ora })
-      .eq('pettorale', numeroPettorale)
-
-    if (error) {
-      console.error("Errore arrivo:", error.message)
-      alert("Errore: " + error.message)
-    } else {
-      fetchAtleti()
-    }
-  }
-
-  if (loading) return <div className="p-10 text-white">Caricamento atleti...</div>
-
   return (
-    <main className="min-h-screen bg-slate-900 text-white p-4 md:p-10 font-sans">
-      <h1 className="text-3xl font-black mb-8 uppercase text-lime-400 italic">
-        Stazione Crono <span className="text-white">VertiPoeta</span>
-      </h1>
+    <main className="min-h-screen bg-slate-900 text-white p-6 flex flex-col items-center justify-center relative">
       
-      <div className="overflow-x-auto shadow-2xl rounded-2xl">
-        <table className="w-full border-collapse bg-slate-800">
-          <thead>
-            <tr className="bg-slate-700 text-left">
-              <th className="p-4 uppercase text-xs tracking-widest text-slate-400">Pett.</th>
-              <th className="p-4 uppercase text-xs tracking-widest text-slate-400">Atleta</th>
-              <th className="p-4 uppercase text-xs tracking-widest text-slate-400">Azioni</th>
-              <th className="p-4 uppercase text-xs tracking-widest text-slate-400">Stato Gara</th>
-            </tr>
-          </thead>
-          <tbody>
-            {atleti.map((atleta) => (
-              <tr key={atleta.pettorale} className="border-t border-slate-700 hover:bg-slate-700/50 transition-colors">
-                <td className="p-4 font-black text-lime-400 text-xl">#{atleta.pettorale}</td>
-                <td className="p-4 uppercase font-bold text-sm tracking-tight">{atleta.nome}</td>
-                <td className="p-4 space-x-2">
-                  {!atleta.partenza && (
-                    <button 
-                      onClick={() => registraPartenza(atleta.pettorale)}
-                      className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg font-black text-xs uppercase shadow-lg active:scale-95 transition-all"
-                    >
-                      🚀 Start
-                    </button>
-                  )}
-                  {atleta.partenza && !atleta.arrivo && (
-                    <button 
-                      onClick={() => registraArrivo(atleta.pettorale)}
-                      className="bg-red-600 hover:bg-red-500 text-white px-5 py-2 rounded-lg font-black text-xs uppercase shadow-lg animate-pulse active:scale-95 transition-all"
-                    >
-                      🏁 Stop Arrivo
-                    </button>
-                  )}
-                </td>
-                <td className="p-4">
-                  {atleta.arrivo ? (
-                    <span className="bg-lime-400/10 text-lime-400 px-3 py-1 rounded-full text-xs font-bold border border-lime-400/20">FINITO</span>
-                  ) : atleta.partenza ? (
-                    <span className="bg-orange-500/10 text-orange-500 px-3 py-1 rounded-full text-xs font-bold border border-orange-500/20">IN SALITA...</span>
-                  ) : (
-                    <span className="text-slate-500 text-xs italic tracking-widest">A BOXES</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* TASTO X - Torna alla Home */}
+      <Link 
+        href="/" 
+        className="absolute top-8 right-8 text-slate-400 hover:text-white transition-all p-2 bg-slate-800 hover:bg-slate-700 rounded-full shadow-xl z-50"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </Link>
+
+      <div className="w-full max-w-md bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl relative overflow-hidden">
+        
+        {!isSuccess ? (
+          <>
+            <h1 className="text-3xl font-black mb-2 uppercase italic text-lime-400">Unisciti alla sfida</h1>
+            <p className="text-slate-400 mb-8 text-sm">Inserisci i tuoi dati per riservare il pettorale di VertiPoeta.</p>
+            
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 font-mono">Nome Completo</label>
+                <input 
+                  type="text" 
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  className="w-full p-4 rounded-xl bg-slate-900 border border-slate-700 focus:border-lime-400 outline-none transition-all placeholder:text-slate-700"
+                  placeholder="Es: Luca Ponzini"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 font-mono">Numero Pettorale</label>
+                <input 
+                  type="number" 
+                  value={pettorale}
+                  onChange={(e) => setPettorale(e.target.value)}
+                  className="w-full p-4 rounded-xl bg-slate-900 border border-slate-700 focus:border-lime-400 outline-none transition-all placeholder:text-slate-700"
+                  placeholder="Es: 42"
+                  required
+                />
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={loading}
+                className="w-full bg-lime-400 text-black font-black py-4 rounded-xl hover:bg-lime-300 transition-all uppercase tracking-tighter disabled:opacity-50 active:scale-95 shadow-lg shadow-lime-400/10"
+              >
+                {loading ? 'Registrazione...' : 'Conferma Iscrizione'}
+              </button>
+            </form>
+          </>
+        ) : (
+          /* SCHERMATA DI SUCCESSO */
+          <div className="text-center py-10">
+            <div className="text-6xl mb-6">🏆</div>
+            <h2 className="text-2xl font-black uppercase mb-4 text-lime-400 italic">Pettorale Confermato!</h2>
+            <p className="text-slate-300 mb-8 leading-relaxed px-4">
+              I tuoi dati sono stati salvati nel database.<br/>Inizia a scaldare i polpacci.
+            </p>
+            <Link 
+              href="/" 
+              className="inline-block bg-white text-black font-black px-10 py-4 rounded-xl hover:bg-lime-400 transition-all uppercase text-xs tracking-widest shadow-xl"
+            >
+              Torna alla Home
+            </Link>
+          </div>
+        )}
+
+        {messaggio && !isSuccess && (
+          <div className="mt-4 p-4 rounded-lg text-center font-bold bg-red-500/10 text-red-500 border border-red-500/20 text-xs">
+            {messaggio}
+          </div>
+        )}
       </div>
     </main>
   )
