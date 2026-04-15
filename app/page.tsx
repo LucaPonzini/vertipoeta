@@ -1,53 +1,94 @@
+'use client'
+
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 
 export default function Home() {
+  const [stats, setStats] = useState({ iscritti: 0, record: '--:--' })
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const { count } = await supabase.from('atleti').select('*', { count: 'exact', head: true })
+      const { data: recordData } = await supabase.from('atleti').select('partenza, arrivo').not('arrivo', 'is', null)
+
+      let migliorTempo = '--:--'
+      if (recordData && recordData.length > 0) {
+        const tempi = recordData.map(a => new Date(a.arrivo).getTime() - new Date(a.partenza).getTime())
+        const minMs = Math.min(...tempi)
+        const min = Math.floor(minMs / 60000)
+        const sec = Math.floor((minMs % 60000) / 1000)
+        migliorTempo = `${min}:${sec < 10 ? '0' : ''}${sec}`
+      }
+      setStats({ iscritti: count || 0, record: migliorTempo })
+    }
+    fetchStats()
+  }, [])
+
   return (
-    <main className="min-h-screen bg-slate-900 text-white font-sans">
+    <main className="min-h-screen text-white flex flex-col items-center p-6 relative overflow-hidden bg-black">
+      
+      {/* LA FOTO: Caricamento diretto senza filtri blu sopra */}
+      <div 
+        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        style={{ 
+          backgroundImage: 'url("https://images.unsplash.com/photo-1544085311-11a028465b03?q=80&w=2000&auto=format&fit=crop")',
+        }}
+      />
+      
+      {/* SFUMATURA NERA: Solo in alto e in basso per far leggere i menu/testi, ma lascia il centro pulito */}
+      <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
+
       {/* HERO SECTION */}
-      <section className="relative h-screen flex items-center justify-center text-center px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1551632811-561732d1e306?q=80&w=2000')] bg-cover bg-center opacity-40"></div>
-        <div className="relative z-10">
-          <h1 className="text-7xl md:text-9xl font-black italic uppercase tracking-tighter text-lime-400">
-            Verti<span className="text-white font-light">Poeta</span>
-          </h1>
-          <p className="mt-4 text-xl md:text-2xl font-medium text-slate-300 max-w-2xl mx-auto italic">
-            {`"Tra un respiro affannato e un verso rubato, la vetta ti attende."`}
-          </p>
-          <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <Link href="/iscrizioni" className="bg-white text-black px-8 py-4 rounded-full font-bold uppercase hover:bg-lime-400 transition-all">
-              Iscriviti Ora
-            </Link>
-            <Link href="/classifica" className="bg-slate-800 border border-slate-700 px-8 py-4 rounded-full font-bold uppercase hover:bg-slate-700 transition-all">
-              Classifica Live
-            </Link>
+      <section className="relative z-10 text-center pt-24 mb-12">
+        <h1 className="text-7xl md:text-9xl font-black uppercase italic tracking-tighter leading-none mb-3 drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)]">
+          Verti<span className="text-[#FF5F00]">Poeta</span>
+        </h1>
+        <p className="text-white text-xs md:text-sm font-black uppercase tracking-[0.5em] mb-12 drop-shadow-xl">
+          Lake Como Vertical Challenge
+        </p>
+
+        {/* BOX STATISTICHE: Trasparenza pura stile Summit Series */}
+        <div className="flex gap-4 w-full max-w-2xl mx-auto mb-10">
+          <div className="flex-1 bg-black/40 backdrop-blur-md border border-white/20 p-5 text-center">
+            <p className="text-[10px] uppercase font-bold tracking-widest text-white/80 mb-1">Partenti</p>
+            <p className="text-3xl font-black italic">{stats.iscritti}</p>
+          </div>
+          <div className="flex-1 bg-[#FF5F00] p-5 text-center shadow-2xl border border-[#FF5F00]">
+            <p className="text-[10px] uppercase font-bold tracking-widest text-white/90 mb-1">Miglior Tempo</p>
+            <p className="text-3xl font-black italic font-mono">{stats.record}</p>
           </div>
         </div>
-      </section>
 
-      {/* SEZIONE PAGINE */}
-      <section className="py-20 px-6 max-w-7xl mx-auto">
-        <h2 className="text-3xl font-black uppercase mb-12 border-l-4 border-lime-400 pl-4">Menu Gara</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <NavCard title="Iscrizioni" desc="Riserva il tuo pettorale per la prossima scalata." link="/iscrizioni" emoji="✍️" />
-          <NavCard title="Percorso" desc="Analizza ogni singolo metro del tracciato." link="/percorso" emoji="⛰️" />
-          <NavCard title="Cronometro" desc="Area riservata per la gestione dei tempi." link="/cronometro" emoji="⏱️" />
-          <NavCard title="Classifica" desc="Guarda i tempi in tempo reale dal traguardo." link="/classifica" emoji="🏆" />
+        {/* BOTTONI: Bianco Solido e Blu Trasparente */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full max-w-2xl mx-auto">
+          <Link href="/iscrizioni" className="bg-white text-[#002FA7] p-8 flex flex-col justify-between hover:bg-[#FF5F00] hover:text-white transition-all duration-300 min-h-[160px] group">
+            <span className="text-4xl font-black uppercase italic leading-none text-left">Prendi il<br/>Pettorale</span>
+            <span className="text-[11px] font-black uppercase tracking-widest self-end">Iscriviti →</span>
+          </Link>
+          <Link href="/classifica" className="bg-[#002FA7]/40 backdrop-blur-lg border-2 border-white p-8 flex flex-col justify-between hover:bg-white hover:text-[#002FA7] transition-all duration-300 min-h-[160px] group">
+            <span className="text-4xl font-black uppercase italic leading-none text-left">Classifica<br/>Live</span>
+            <span className="text-[11px] font-black uppercase tracking-widest self-end">Risultati →</span>
+          </Link>
         </div>
       </section>
 
-      <footer className="py-10 text-center border-t border-slate-800 text-slate-500 text-sm">
-        © 2026 VertiPoeta - Organizzato da Luca Ponzini
+      {/* BOX INFO: Spostato in fondo e reso più compatto per non coprire il centro della foto */}
+      <section className="relative z-10 w-full max-w-2xl bg-black/30 backdrop-blur-xl p-8 border border-white/10 shadow-2xl mt-auto mb-10">
+        <div className="flex flex-wrap gap-8 items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-black uppercase italic text-[#FF5F00]">La Sfida</h2>
+            <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">1.61 KM // 300M D+ // VERTICAL</p>
+          </div>
+          <Link href="/percorso" className="bg-white text-[#002FA7] px-6 py-3 font-black uppercase italic text-xs hover:bg-[#FF5F00] hover:text-white transition-all">
+            Mappa Percorso
+          </Link>
+        </div>
+      </section>
+
+      <footer className="relative z-10 pb-4 text-white/60 text-[9px] font-black uppercase tracking-[0.5em]">
+        VertiPoeta // Nessuna scorciatoia
       </footer>
     </main>
-  )
-}
-
-function NavCard({ title, desc, link, emoji }: { title: string, desc: string, link: string, emoji: string }) {
-  return (
-    <Link href={link} className="group p-8 bg-slate-800/50 border border-slate-700 rounded-3xl hover:border-lime-400 transition-all">
-      <div className="text-4xl mb-4">{emoji}</div>
-      <h3 className="text-xl font-bold mb-2 group-hover:text-lime-400">{title}</h3>
-      <p className="text-slate-400 text-sm">{desc}</p>
-    </Link>
   )
 }

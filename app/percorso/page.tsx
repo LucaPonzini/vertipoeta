@@ -1,50 +1,55 @@
+'use client'
+
+import Link from 'next/link'
+
 export default function Percorso() {
   return (
-    <main className="min-h-screen bg-slate-900 text-white p-8 font-sans">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-black uppercase italic text-lime-400 mb-6">Il Percorso</h1>
-        
-        {/* STATISTICHE RAPIDE */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-          <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-lg">
-            <p className="text-slate-400 uppercase text-xs font-bold tracking-widest">Distanza</p>
-            <p className="text-3xl font-black text-white">1.67 km</p>
+    <main className="min-h-screen bg-[#002FA7] text-white p-6 pt-24 relative overflow-hidden">
+      {/* Sfondo decorativo */}
+      <div className="absolute inset-0 z-0 opacity-10" 
+           style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
+
+      <div className="relative z-10 max-w-5xl mx-auto">
+        <div className="mb-10 text-center">
+          <h1 className="text-5xl md:text-7xl font-black uppercase italic text-[#FF5F00] leading-none mb-4">
+            Il Percorso
+          </h1>
+          <p className="text-white/60 text-xs font-bold uppercase tracking-[0.3em]">
+            Analisi Tecnica // 300m D+ // Lake Como
+          </p>
+        </div>
+
+        {/* MAPPA INTERATTIVA KOMOOT */}
+        <div className="w-full h-[650px] bg-white shadow-2xl border-4 border-white/10">
+          <iframe 
+            src="https://www.komoot.com/it-it/tour/2886518280/embed?share_token=auzZZBGnr2AdggqMwy83770UejmuYjiTGl4xtBO2I9GAKAGkfS&profile=1" 
+            width="100%" 
+            height="100%" 
+            frameBorder="0" 
+            scrolling="no"
+          ></iframe>
+        </div>
+
+        {/* DETTAGLI TECNICI AGGIORNATI */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+          <div className="bg-white/5 p-6 border-l-4 border-[#FF5F00]">
+            <p className="text-[10px] uppercase opacity-50 font-bold mb-1">Distanza</p>
+            <p className="text-2xl font-black italic">1.61 km</p>
           </div>
-          <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-lg">
-            <p className="text-slate-400 uppercase text-xs font-bold tracking-widest">Dislivello</p>
-            <p className="text-3xl font-black text-white">+319 m</p>
+          <div className="bg-white/5 p-6 border-l-4 border-[#FF5F00]">
+            <p className="text-[10px] uppercase opacity-50 font-bold mb-1">Dislivello Positivo</p>
+            <p className="text-2xl font-black italic">300 m</p>
           </div>
-          <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-lg">
-            <p className="text-slate-400 uppercase text-xs font-bold tracking-widest">Pendenza Media</p>
-            <p className="text-3xl font-black text-white">19.1 %</p>
+          <div className="bg-white/5 p-6 border-l-4 border-[#FF5F00]">
+            <p className="text-[10px] uppercase opacity-50 font-bold mb-1">Pendenza Media</p>
+            <p className="text-2xl font-black italic">18.6%</p>
           </div>
         </div>
 
-        {/* DESCRIZIONE E STRAVA */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-          <div className="space-y-4 text-slate-300">
-            <p>
-              La <span className="text-white font-bold italic">VertiPoeta</span> non è una gara per tutti. Si parte dal fondovalle e si sale dritti verso la dimora del poeta.
-            </p>
-            <p>
-              Il sentiero è a tratti tecnico, con gradini di roccia e sezioni cementate. La gestione del fiato è fondamentale: se spingi troppo nei primi 500 metri, la {`"parete"`} finale non ti lascerà scampo.
-            </p>
-            <a 
-              href="https://www.strava.com/segments/40284189" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-block bg-[#FC4C02] text-white px-8 py-3 rounded-xl font-bold uppercase text-sm mt-4 hover:scale-105 transition-transform"
-            >
-              Vedi Segmento su Strava
-            </a>
-          </div>
-
-          <div className="bg-slate-800 rounded-3xl p-8 border border-slate-700 flex flex-col items-center justify-center text-center">
-             <div className="text-4xl mb-4">📉</div>
-             <p className="text-slate-400 italic text-sm">
-                Prossimamente: Mappa interattiva e profilo altimetrico dettagliato.
-             </p>
-          </div>
+        <div className="mt-12 text-center pb-12">
+           <Link href="/iscrizioni" className="inline-block bg-[#FF5F00] text-white font-black px-10 py-4 uppercase italic hover:scale-105 transition-transform shadow-xl">
+             Accetta la sfida
+           </Link>
         </div>
       </div>
     </main>

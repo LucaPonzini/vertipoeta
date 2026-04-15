@@ -10,113 +10,102 @@ export default function Iscrizioni() {
   const [accettaDelega, setAccettaDelega] = useState(false)
   const [loading, setLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
-  const [messaggio, setMessaggio] = useState('')
   const [pettoraleAssegnato, setPettoraleAssegnato] = useState<number | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!accettaDelega) {
-      setMessaggio("Devi accettare la delega per procedere.")
-      return
-    }
+    if (!accettaDelega) return
     setLoading(true)
-    setMessaggio('')
 
     try {
-      // 1. Cerchiamo il pettorale più alto attualmente nel DB
-      const { data: ultimiAtleti, error: fetchError } = await supabase
-        .from('atleti')
-        .select('pettorale')
-        .order('pettorale', { ascending: false })
-        .limit(1)
+      const { data: ultimiAtleti } = await supabase.from('atleti').select('pettorale').order('pettorale', { ascending: false }).limit(1)
+      const nuovoPettorale = ultimiAtleti && ultimiAtleti.length > 0 ? (Number(ultimiAtleti[0].pettorale) + 1) : 1
 
-      if (fetchError) throw fetchError
+      const { error } = await supabase.from('atleti').insert([{ nome, squadra, pettorale: nuovoPettorale }])
+      if (error) throw error
 
-      // Se la tabella è vuota, ultimiAtleti sarà un array vuoto [], quindi partiamo da 1
-      const nuovoPettorale = ultimiAtleti && ultimiAtleti.length > 0 
-        ? (Number(ultimiAtleti[0].pettorale) + 1) 
-        : 1
-
-      // 2. Inseriamo il nuovo atleta con il pettorale calcolato
-      const { error: insertError } = await supabase
-        .from('atleti')
-        .insert([{ 
-          nome, 
-          squadra, 
-          pettorale: nuovoPettorale,
-          partenza: null,
-          arrivo: null 
-        }])
-
-      if (insertError) throw insertError
-
-      // Se tutto va bene, aggiorniamo l'interfaccia
       setPettoraleAssegnato(nuovoPettorale)
       setIsSuccess(true)
-    } catch (err: any) {
-      setMessaggio("Errore: " + err.message)
+    } catch (err) {
+      alert("Errore durante l'iscrizione")
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <main className="min-h-screen bg-slate-900 text-white p-6 flex flex-col items-center justify-center relative">
-      <Link href="/" className="absolute top-8 right-8 text-slate-400 hover:text-white p-2 bg-slate-800 rounded-full transition-all shadow-lg">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </Link>
-
-      <div className="w-full max-w-md bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl overflow-hidden">
+    <main className="min-h-screen bg-[#002FA7] text-white flex items-center justify-center p-6 pt-24">
+      {/* Box Invertito: Sfondo Bianco */}
+      <div className="w-full max-w-md bg-white p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative rounded-none">
         {!isSuccess ? (
           <>
-            <div className="mb-8 text-center">
-              <h1 className="text-4xl font-black mb-2 uppercase italic text-lime-400 leading-none">Iscrizione</h1>
-              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Il numero sarà assegnato in ordine di arrivo</p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Atleta</label>
+            <h1 className="text-5xl font-black uppercase italic text-[#FF5F00] mb-8 leading-none">Iscrizione</h1>
+            
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-[#002FA7]/60 block mb-2">Nome Completo</label>
                 <input 
-                  type="text" placeholder="Nome e Cognome" value={nome} onChange={(e) => setNome(e.target.value)}
-                  className="w-full p-4 rounded-xl bg-slate-900 border border-slate-700 focus:border-lime-400 outline-none font-bold" required
+                  type="text" 
+                  value={nome} 
+                  onChange={(e) => setNome(e.target.value)} 
+                  className="w-full bg-[#002FA7]/5 border-2 border-[#002FA7]/10 p-4 font-bold text-[#002FA7] outline-none focus:border-[#FF5F00] transition-colors" 
+                  placeholder="ES: MARIO ROSSI"
+                  required 
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Squadra / Nickname</label>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-[#002FA7]/60 block mb-2">Squadra / Club</label>
                 <input 
-                  type="text" placeholder="Es: Vertical Team" value={squadra} onChange={(e) => setSquadra(e.target.value)}
-                  className="w-full p-4 rounded-xl bg-slate-900 border border-slate-700 focus:border-lime-400 outline-none font-bold"
+                  type="text" 
+                  value={squadra} 
+                  onChange={(e) => setSquadra(e.target.value)} 
+                  className="w-full bg-[#002FA7]/5 border-2 border-[#002FA7]/10 p-4 font-bold text-[#002FA7] outline-none focus:border-[#FF5F00] transition-colors" 
+                  placeholder="ES: VERTICAL TEAM"
                 />
               </div>
 
-              <div className="flex items-start gap-3 bg-slate-900/50 p-4 rounded-xl border border-slate-700 mt-2">
-                <input type="checkbox" id="delega" checked={accettaDelega} onChange={(e) => setAccettaDelega(e.target.checked)} className="mt-1 h-4 w-4 accent-lime-400" />
-                <label htmlFor="delega" className="text-[10px] text-slate-400 uppercase font-bold leading-tight cursor-pointer">
-                  Confermo di aver letto il regolamento e di consegnare la delega firmata alla partenza.
+              <div className="flex items-start gap-3 bg-[#002FA7]/5 p-4 border border-[#002FA7]/10">
+                <input 
+                  type="checkbox" 
+                  checked={accettaDelega} 
+                  onChange={(e) => setAccettaDelega(e.target.checked)} 
+                  className="mt-1 accent-[#FF5F00] h-4 w-4" 
+                  required 
+                />
+                <label className="text-[9px] uppercase font-bold text-[#002FA7]/80 leading-tight">
+                  Accetto il regolamento della VertiPoeta e mi assumo la piena responsabilità per la prova fisica.
                 </label>
               </div>
 
-              {messaggio && <p className="text-red-400 text-[10px] font-bold text-center uppercase animate-bounce">{messaggio}</p>}
-
-              <button type="submit" disabled={loading} className="w-full bg-lime-400 text-black font-black py-4 rounded-xl hover:bg-lime-300 transition-all uppercase shadow-lg shadow-lime-400/10">
-                {loading ? 'Generazione...' : 'Ottieni il mio Pettorale'}
+              <button 
+                type="submit" 
+                disabled={loading} 
+                className="w-full bg-[#FF5F00] text-white font-black py-5 uppercase italic hover:bg-[#002FA7] transition-all shadow-lg active:scale-95"
+              >
+                {loading ? 'Generazione...' : 'Ottieni il tuo Numero'}
               </button>
             </form>
           </>
         ) : (
-          <div className="text-center py-6 animate-in zoom-in duration-300">
-            <p className="text-lime-400 text-sm font-bold uppercase tracking-widest mb-2">Sei ufficialmente in gara</p>
-            <div className="text-8xl mb-4 font-black italic text-white drop-shadow-[0_0_15px_rgba(163,230,53,0.3)]">#{pettoraleAssegnato}</div>
-            <h2 className="text-2xl font-black uppercase mb-8">Pettorale Assegnato!</h2>
-            <Link href="/" className="inline-block bg-white text-black font-black px-10 py-4 rounded-xl uppercase text-xs hover:bg-lime-400 transition-colors">
+          <div className="text-center py-10">
+            <p className="text-[#FF5F00] text-xs font-black uppercase tracking-widest mb-4">Pettorale Confermato</p>
+            <div className="text-9xl font-black italic mb-6 text-[#002FA7]">#{pettoraleAssegnato}</div>
+            <Link 
+              href="/" 
+              className="inline-block bg-[#002FA7] text-white px-10 py-4 font-black uppercase italic text-xs hover:bg-[#FF5F00] transition-all shadow-md"
+            >
               Torna alla Home
             </Link>
           </div>
         )}
+      </div>
+
+      {/* Dettaglio estetico laterale */}
+      <div className="absolute right-6 bottom-10 hidden md:block">
+        <p className="rotate-90 origin-right text-[10px] font-black uppercase tracking-[0.5em] text-white/20 whitespace-nowrap">
+          REGISTRATION FORM // VERTIPOETA 2026
+        </p>
       </div>
     </main>
   )
